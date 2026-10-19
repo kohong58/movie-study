@@ -1,0 +1,12 @@
+{
+  "name": "movie-study-scheduler",
+  "version": "1.0.0",
+  "private": true,
+  "description": "영화 스터디 모임 시간 맞추기",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

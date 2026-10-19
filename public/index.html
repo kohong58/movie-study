@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{{TITLE}} 시간 맞추기</title>
+<meta name="description" content="가능한 시간을 칠해 주세요. 한 번에 약 3시간이에요.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{TITLE}} 시간 정해요">
+<meta property="og:description" content="가능한 시간을 칠해 주세요. 한 번에 약 3시간이에요.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@700&display=swap">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #ECEEF4;
+  --surface: #FAFBFD;
+  --ink: #161A2B;
+  --muted: #5B6278;
+  --line: #D5D9E4;
+  --cell: #E3E6EF;
+  --accent: #3347D6;
+  --on-accent: #FFFFFF;
+  --hl: #D98E04;
+  --sun: #C23B4E;
+  --font-display: "Noto Serif KR", "Batang", serif;
+  --font-body: "IBM Plex Sans KR", system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #12141D; --surface: #1B1E2A; --ink: #ECEEF6; --muted: #9AA1B8; --line: #2C3042;
+    --cell: #242839; --accent: #8593FF; --on-accent: #0F1226; --hl: #F0B84A; --sun: #FF8A98;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.55;
+  -webkit-text-size-adjust: 100%;
+}
+.wrap {
+  max-width: 640px; margin: 0 auto;
+  padding-top: 0; padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.strip {
+  height: 14px;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 10px, var(--bg) 10px 18px) center / 100% 6px no-repeat,
+    var(--ink);
+}
+header { padding-block: 22px 18px; }
+.eyebrow { font-size: 12px; letter-spacing: .12em; color: var(--muted); font-weight: 500; }
+h1 {
+  font-family: var(--font-display); font-weight: 700; font-size: 32px; line-height: 1.2;
+  margin: 6px 0 8px; text-wrap: balance; word-break: keep-all;
+}
+.sub { color: var(--muted); margin: 0; }
+.sub b { color: var(--ink); font-weight: 600; }
+.share { margin-top: 14px; }
+.sharetext { width: 100%; margin-top: 8px; font: inherit; font-size: 13px; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+
+.tabs { display: flex; gap: 4px; padding: 4px; background: var(--cell); border-radius: 10px; margin-bottom: 18px; }
+.tabs button {
+  flex: 1; border: 0; background: transparent; color: var(--muted); font: inherit; font-weight: 500;
+  padding: 9px 8px; border-radius: 7px; cursor: pointer;
+}
+.tabs button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.banner { padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--muted); margin-bottom: 14px; font-size: 13px; }
+
+label.f { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+input[type="text"], input[type="date"], input[type="password"] {
+  width: 100%; font: inherit; font-size: 16px; color: var(--ink); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px;
+}
+.hint { font-size: 12.5px; color: var(--muted); margin: 6px 0 0; }
+.field { margin-bottom: 18px; }
+
+.weeks { display: flex; gap: 6px; margin: 4px 0 12px; flex-wrap: wrap; }
+.weeks button {
+  font: inherit; font-size: 13px; font-family: var(--font-mono); padding: 6px 12px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; cursor: pointer;
+}
+.weeks button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.weeks button[data-add], .weeks button[data-del] { border-style: dashed; color: var(--muted); font-family: var(--font-body); }
+
+.gridbox { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 8px 8px; }
+.grid { display: grid; grid-template-columns: 34px repeat(7, minmax(0, 1fr)); gap: 3px; user-select: none; -webkit-user-select: none; }
+.grid.mine { touch-action: none; }
+.dh { text-align: center; line-height: 1.2; padding-bottom: 4px; font-size: 11px; color: var(--muted); }
+.dh b { display: block; font-family: var(--font-mono); font-weight: 500; font-size: 12px; color: var(--ink); }
+.dh.sun span, .dh.sun b { color: var(--sun); }
+.dh.sat span, .dh.sat b { color: var(--accent); }
+.tl { font-family: var(--font-mono); font-size: 11px; color: var(--muted); display: flex; align-items: center; justify-content: flex-end; padding-right: 4px; }
+.c {
+  height: 33px; border: 0; padding: 0; border-radius: 5px; background: var(--cell); color: var(--ink);
+  font-family: var(--font-mono); font-size: 12px; cursor: pointer;
+}
+.mine .c { touch-action: none; }
+.c.on { background: var(--accent); }
+.c.hl { outline: 2px solid var(--hl); outline-offset: -2px; }
+.all .c { background: color-mix(in srgb, var(--accent) calc(var(--p) * 1%), var(--cell)); }
+.all .c.hi { color: var(--on-accent); }
+
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+.count { font-size: 13px; color: var(--muted); }
+.count b { color: var(--ink); font-family: var(--font-mono); }
+.primary {
+  font: inherit; font-weight: 600; color: var(--on-accent); background: var(--accent);
+  border: 0; border-radius: 9px; padding: 11px 22px; cursor: pointer;
+}
+.primary:disabled { opacity: .45; cursor: not-allowed; }
+.ghost { font: inherit; font-size: 13px; color: var(--muted); background: none; border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px; cursor: pointer; }
+
+h2 { font-family: var(--font-display); font-size: 19px; margin: 0 0 4px; }
+.cands { display: grid; gap: 8px; margin: 12px 0 24px; padding: 0; list-style: none; }
+.cand {
+  display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; align-items: center; width: 100%; text-align: left;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; cursor: pointer; font: inherit; color: var(--ink);
+}
+.cand[aria-pressed="true"] { border-color: var(--hl); box-shadow: 0 0 0 1px var(--hl); }
+.cand .n { grid-row: span 2; font-family: var(--font-mono); font-size: 22px; font-weight: 500; color: var(--accent); min-width: 56px; }
+.cand .n small { font-size: 12px; color: var(--muted); }
+.cand .d { font-weight: 600; }
+.cand .t { font-family: var(--font-mono); font-size: 13px; color: var(--muted); }
+.cand .m { grid-column: 1 / -1; font-size: 12.5px; color: var(--muted); }
+.empty { padding: 20px 16px; border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); text-align: center; margin: 12px 0 24px; }
+
+.people { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 22px; padding: 0; list-style: none; }
+.people li { background: var(--surface); border: 1px solid var(--line); padding: 4px 11px; border-radius: 999px; font-size: 13px; }
+.people li button { border: 0; background: none; color: var(--muted); cursor: pointer; font: inherit; padding: 0 0 0 6px; }
+.who { margin-top: 12px; font-size: 13.5px; min-height: 22px; color: var(--muted); }
+.who b { color: var(--ink); }
+.legend { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); margin-top: 10px; }
+.legend i { display: block; width: 110px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--cell), var(--accent)); }
+
+details { margin-top: 28px; border-top: 1px solid var(--line); padding-top: 14px; }
+summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+.cfg { display: grid; gap: 12px; margin-top: 12px; }
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  background: var(--ink); color: var(--bg); padding: 10px 18px; border-radius: 999px; font-size: 14px; z-index: 20; max-width: 90vw; text-align: center;
+}
+[hidden] { display: none !important; }
+@media (prefers-reduced-motion: no-preference) { .tabs button, .c { transition: background-color .12s; } }
+</style>
+</head>
+<body>
+<div class="strip" aria-hidden="true"></div>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">모임 시간 정하기</div>
+    <h1 id="title">{{TITLE}}</h1>
+    <p class="sub">한 번에 <b>약 3시간</b>. 가능한 시간을 칠하면 모두가 겹치는 시간이 위로 올라와요.</p>
+    <div class="share"><button type="button" class="ghost" id="share">카톡으로 공유하기</button></div>
+    <textarea id="sharetext" class="sharetext" rows="3" readonly hidden aria-label="공유할 글"></textarea>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tab-mine" aria-selected="true" type="button">내 시간 입력</button>
+    <button role="tab" id="tab-all" aria-selected="false" type="button">모두의 시간</button>
+  </div>
+
+  <div id="neterr" class="banner" hidden>서버에 연결하지 못했어요. 잠시 뒤 다시 시도해 주세요.</div>
+
+  <section id="panel-mine">
+    <div class="field">
+      <label class="f" for="name">이름</label>
+      <input type="text" id="name" maxlength="20" autocomplete="off" placeholder="예: 민수">
+      <p class="hint">같은 이름으로 저장하면 이전에 낸 시간을 고칠 수 있어요.</p>
+    </div>
+    <div id="weeks-mine" class="weeks"></div>
+    <div class="gridbox"><div id="grid-mine"></div></div>
+    <p class="hint">칸을 누르거나 끌어서 가능한 시간을 칠하세요. 한 칸은 1시간이고, 다시 누르면 지워져요.</p>
+    <div class="bar">
+      <span class="count"><b id="mycount">0</b>시간 선택</span>
+      <button class="primary" id="save" type="button">저장하기</button>
+    </div>
+  </section>
+
+  <section id="panel-all" hidden>
+    <h2>3시간 모임에 맞는 후보</h2>
+    <p class="hint" id="allsum"></p>
+    <ol class="cands" id="cands"></ol>
+    <div id="weeks-all" class="weeks"></div>
+    <div class="gridbox all"><div id="grid-all"></div></div>
+    <div class="legend"><span>0명</span><i></i><span id="legmax">전원</span></div>
+    <div class="who" id="who">칸을 누르면 그 시간에 가능한 사람이 보여요.</div>
+    <h2 style="margin-top:24px">응답한 사람</h2>
+    <ul class="people" id="people"></ul>
+  </section>
+
+  <details id="adminbox">
+    <summary>관리자</summary>
+    <div class="cfg">
+      <div id="admin-locked">
+        <label class="f" for="admin-key">관리자 비밀번호</label>
+        <input type="password" id="admin-key" autocomplete="current-password">
+        <p class="hint" id="admin-note"></p>
+        <div style="margin-top:10px"><button class="primary" id="admin-unlock" type="button">확인</button></div>
+      </div>
+      <div id="admin-open" hidden class="cfg">
+        <div><label class="f" for="cfg-title">모임 이름</label><input type="text" id="cfg-title" maxlength="30"></div>
+        <div><label class="f" for="cfg-start">첫 주 시작 날짜</label><input type="date" id="cfg-start"></div>
+        <div><button class="primary" id="cfg-save" type="button">설정 저장</button></div>
+        <p class="hint">응답한 사람 이름 옆 × 로 응답을 지울 수 있고, 주 선택 줄의 "마지막 주 삭제"도 쓸 수 있어요.</p>
+      </div>
+    </div>
+  </details>
+</div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+(function () {
+  var DAY = ['일', '월', '화', '수', '목', '금', '토'];
+  var H0 = 9, H1 = 24, DUR = 3, MAXW = 26;
+  var cfg = { title: '', start: '2026-01-05', days: 14 };
+  var responses = {};
+  var adminEnabled = false, isAdmin = false, adminKey = '';
+  var myName = '', mySlots = new Set(), dirty = false;
+  var week = 0, hl = null, painting = false, paintVal = true, loaded = false, weekInit = false;
+
+  function $(s) { return document.querySelector(s); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function dkey(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function skey(d, h) { return dkey(d) + '-' + pad(h); }
+  function tm(h) { return pad(h) + ':00'; }
+  function dlabel(d) { return (d.getMonth() + 1) + '월 ' + d.getDate() + '일 (' + DAY[d.getDay()] + ')'; }
+  function dates() {
+    var p = cfg.start.split('-').map(Number);
+    return Array.from({ length: cfg.days }, function (_, i) { return new Date(p[0], p[1] - 1, p[2] + i); });
+  }
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function ssGet(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
+  function ssSet(k, v) { try { if (v) sessionStorage.setItem(k, v); else sessionStorage.removeItem(k); } catch (e) {} }
+  function toast(msg) {
+    var t = $('#toast'); t.textContent = msg; t.hidden = false;
+    clearTimeout(toast.t); toast.t = setTimeout(function () { t.hidden = true; }, 2400);
+  }
+
+  function api(method, url, body) {
+    var headers = { 'Content-Type': 'application/json' };
+    if (adminKey) headers['X-Admin-Key'] = adminKey;
+    return fetch(url, { method: method, headers: headers, body: body ? JSON.stringify(body) : undefined }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        if (!r.ok) { var e = new Error(j.error || 'error'); e.status = r.status; throw e; }
+        return j;
+      });
+    });
+  }
+
+  function peopleList() {
+    return Object.keys(responses).map(function (k) {
+      var r = responses[k];
+      return { name: r.name, set: new Set(r.slots || []) };
+    });
+  }
+
+  function weeksHTML(target) {
+    var ds = dates(), n = Math.ceil(ds.length / 7), h = '';
+    for (var i = 0; i < n; i++) {
+      var a = ds[i * 7], b = ds[Math.min(i * 7 + 6, ds.length - 1)];
+      h += '<button type="button" data-w="' + i + '" aria-pressed="' + (i === week) + '">' +
+        (a.getMonth() + 1) + '/' + a.getDate() + ' – ' + (b.getMonth() + 1) + '/' + b.getDate() + '</button>';
+    }
+    if (n < MAXW) h += '<button type="button" data-add="1">＋ 한 주 추가</button>';
+    if (isAdmin && n > 1) h += '<button type="button" data-del="1">마지막 주 삭제</button>';
+    $(target).innerHTML = h;
+  }
+
+  function gridHTML(mode) {
+    var ds = dates().slice(week * 7, week * 7 + 7);
+    var ps = mode === 'all' ? peopleList() : [];
+    var total = ps.length;
+    var h = '<div class="grid ' + mode + '"><div></div>';
+    ds.forEach(function (d) {
+      var w = d.getDay();
+      h += '<div class="dh ' + (w === 0 ? 'sun' : w === 6 ? 'sat' : '') + '"><span>' + DAY[w] + '</span><b>' + (d.getMonth() + 1) + '/' + d.getDate() + '</b></div>';
+    });
+    for (var hr = H0; hr < H1; hr++) {
+      h += '<div class="tl">' + pad(hr) + '</div>';
+      ds.forEach(function (d) {
+        var k = skey(d, hr), label = dlabel(d) + ' ' + hr + '시';
+        if (mode === 'mine') {
+          h += '<button type="button" class="c' + (mySlots.has(k) ? ' on' : '') + '" data-k="' + k + '" aria-pressed="' + mySlots.has(k) + '" aria-label="' + label + '"></button>';
+        } else {
+          var cnt = ps.filter(function (p) { return p.set.has(k); }).length;
+          var pct = total ? Math.round(cnt / total * 100) : 0;
+          var inHl = hl && hl.day === dkey(d) && hr >= hl.h && hr < hl.h + DUR;
+          h += '<button type="button" class="c' + (pct > 55 ? ' hi' : '') + (inHl ? ' hl' : '') + '" data-k="' + k + '" style="--p:' + pct + '" aria-label="' + label + ' ' + cnt + '명">' + (cnt || '') + '</button>';
+        }
+      });
+    }
+    return h + '</div>';
+  }
+
+  var cands = [];
+  function candidates() {
+    var ps = peopleList();
+    if (!ps.length) return [];
+    var out = [];
+    dates().forEach(function (d) {
+      for (var hr = H0; hr + DUR <= H1; hr++) {
+        var ks = [];
+        for (var i = 0; i < DUR; i++) ks.push(skey(d, hr + i));
+        var ok = ps.filter(function (p) { return ks.every(function (k) { return p.set.has(k); }); });
+        if (ok.length) out.push({ d: d, hr: hr, ok: ok, miss: ps.filter(function (p) { return ok.indexOf(p) < 0; }) });
+      }
+    });
+    out.sort(function (a, b) { return b.ok.length - a.ok.length || a.d - b.d || a.hr - b.hr; });
+    var groups = {}, order = [];
+    out.forEach(function (c) {
+      var sig = dkey(c.d) + '|' + c.ok.map(function (p) { return p.name; }).sort().join(',');
+      if (groups[sig]) { groups[sig].last = Math.max(groups[sig].last, c.hr); }
+      else { c.last = c.hr; groups[sig] = c; order.push(c); }
+    });
+    return order.slice(0, 5);
+  }
+
+  function renderMine() {
+    weeksHTML('#weeks-mine');
+    $('#grid-mine').innerHTML = gridHTML('mine');
+    $('#mycount').textContent = mySlots.size;
+  }
+
+  function renderAll() {
+    var ps = peopleList(), n = ps.length;
+    weeksHTML('#weeks-all');
+    $('#grid-all').innerHTML = gridHTML('all');
+    $('#legmax').textContent = n ? n + '명 전원' : '전원';
+    $('#people').innerHTML = n ? ps.map(function (p) {
+      return '<li>' + esc(p.name) + (isAdmin ? '<button type="button" data-delp="' + esc(p.name) + '" aria-label="' + esc(p.name) + ' 응답 삭제">×</button>' : '') + '</li>';
+    }).join('') : '<li>아직 없어요</li>';
+    cands = candidates();
+    $('#allsum').textContent = n
+      ? '응답 ' + n + '명. 3시간 내내 가능한 사람이 많은 순서예요.'
+      : '아직 응답이 없어요. 내 시간 입력 탭에서 첫 번째로 저장해 보세요.';
+    if (!n) { $('#cands').innerHTML = '<div class="empty">응답이 모이면 겹치는 3시간이 여기에 나와요.</div>'; return; }
+    if (!cands.length) { $('#cands').innerHTML = '<div class="empty">3시간 연속으로 겹치는 시간이 아직 없어요. 가능한 시간을 더 넓게 칠해 달라고 부탁해 보세요.</div>'; return; }
+    $('#cands').innerHTML = cands.map(function (c, i) {
+      var sel = hl && hl.day === dkey(c.d) && hl.h === c.hr;
+      var t = tm(c.hr) + '–' + tm(c.hr + DUR) + (c.last > c.hr ? ' · 늦으면 ' + tm(c.last) + ' 시작도 가능' : '');
+      var m = c.miss.length ? '못 오는 사람: ' + c.miss.map(function (p) { return esc(p.name); }).join(', ') : '응답한 모두 가능';
+      return '<li><button type="button" class="cand" data-i="' + i + '" aria-pressed="' + !!sel + '">' +
+        '<span class="n">' + c.ok.length + '<small>/' + n + '명</small></span>' +
+        '<span class="d">' + dlabel(c.d) + '</span><span class="t">' + t + '</span>' +
+        '<span class="m">' + m + '</span></button></li>';
+    }).join('');
+  }
+
+  function render() {
+    $('#title').textContent = cfg.title;
+    document.title = cfg.title + ' 시간 맞추기';
+    if (!painting) renderMine();
+    renderAll();
+  }
+
+  function initWeek() {
+    if (weekInit) return; weekInit = true;
+    var p = cfg.start.split('-').map(Number), n = new Date();
+    var idx = Math.round((Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()) - Date.UTC(p[0], p[1] - 1, p[2])) / 86400000);
+    if (idx > 0) week = Math.floor(idx / 7);
+    week = Math.max(0, Math.min(week, Math.ceil(cfg.days / 7) - 1));
+  }
+
+  function load() {
+    return api('GET', '/api/state').then(function (s) {
+      $('#neterr').hidden = true;
+      cfg = s.config; adminEnabled = s.adminEnabled;
+      var next = {};
+      s.responses.forEach(function (r) { next[r.name] = r; });
+      responses = next;
+      initWeek();
+      week = Math.max(0, Math.min(week, Math.ceil(cfg.days / 7) - 1));
+      var mine = myName && responses[myName];
+      if (mine && !dirty) mySlots = new Set(mine.slots || []);
+      loaded = true;
+      render();
+    }).catch(function () { $('#neterr').hidden = false; });
+  }
+
+  function setTab(t) {
+    $('#tab-mine').setAttribute('aria-selected', t === 'mine');
+    $('#tab-all').setAttribute('aria-selected', t === 'all');
+    $('#panel-mine').hidden = t !== 'mine';
+    $('#panel-all').hidden = t !== 'all';
+  }
+  $('#tab-mine').onclick = function () { setTab('mine'); };
+  $('#tab-all').onclick = function () { setTab('all'); };
+
+  function changeWeeks(delta) {
+    api('POST', '/api/weeks', { delta: delta }).then(function (r) {
+      cfg = r.config;
+      var n = Math.ceil(cfg.days / 7);
+      week = delta > 0 ? n - 1 : Math.min(week, n - 1);
+      render();
+      toast(delta > 0 ? '한 주를 추가했어요' : '마지막 주를 삭제했어요');
+    }).catch(function (e) { toast(e.message || '주를 바꾸지 못했어요'); });
+  }
+  function weekClick(e) {
+    if (e.target.closest('button[data-add]')) { changeWeeks(1); return; }
+    if (e.target.closest('button[data-del]')) { changeWeeks(-1); return; }
+    var b = e.target.closest('button[data-w]');
+    if (!b) return;
+    week = +b.dataset.w; render();
+  }
+  $('#weeks-mine').onclick = weekClick;
+  $('#weeks-all').onclick = weekClick;
+
+  /* 내 시간 칠하기 */
+  var gm = $('#grid-mine');
+  function setCell(el, on) {
+    var k = el.dataset.k;
+    if (!k) return;
+    if (on) mySlots.add(k); else mySlots.delete(k);
+    el.classList.toggle('on', on);
+    el.setAttribute('aria-pressed', on);
+    dirty = true;
+    $('#mycount').textContent = mySlots.size;
+  }
+  gm.addEventListener('pointerdown', function (e) {
+    var el = e.target.closest('.c');
+    if (!el) return;
+    e.preventDefault();
+    painting = true; paintVal = !mySlots.has(el.dataset.k);
+    setCell(el, paintVal);
+  });
+  gm.addEventListener('pointermove', function (e) {
+    if (!painting) return;
+    var el = document.elementFromPoint(e.clientX, e.clientY);
+    el = el && el.closest && el.closest('#grid-mine .c');
+    if (el) setCell(el, paintVal);
+  });
+  function stopPaint() { painting = false; }
+  window.addEventListener('pointerup', stopPaint);
+  window.addEventListener('pointercancel', stopPaint);
+  gm.addEventListener('click', function (e) {
+    if (e.detail !== 0) return; // 마우스·터치는 pointerdown에서 처리해요
+    var el = e.target.closest('.c');
+    if (el) setCell(el, !mySlots.has(el.dataset.k));
+  });
+
+  /* 후보·모두의 시간 */
+  $('#cands').addEventListener('click', function (e) {
+    var b = e.target.closest('.cand');
+    if (!b) return;
+    var c = cands[+b.dataset.i];
+    hl = { day: dkey(c.d), h: c.hr };
+    var idx = dates().findIndex(function (d) { return dkey(d) === hl.day; });
+    week = Math.floor(idx / 7);
+    render();
+  });
+  $('#grid-all').addEventListener('click', function (e) {
+    var el = e.target.closest('.c');
+    if (!el) return;
+    var k = el.dataset.k, ps = peopleList();
+    var yes = ps.filter(function (p) { return p.set.has(k); }).map(function (p) { return esc(p.name); });
+    var no = ps.filter(function (p) { return !p.set.has(k); }).map(function (p) { return esc(p.name); });
+    var parts = k.split('-'), hr = +parts[3];
+    $('#who').innerHTML = '<b>' + (+parts[1]) + '월 ' + (+parts[2]) + '일 ' + hr + '시</b> · 가능 ' + (yes.length ? yes.join(', ') : '없음') + (no.length ? ' · 불가 ' + no.join(', ') : '');
+  });
+  $('#people').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-delp]');
+    if (!b) return;
+    var name = b.dataset.delp;
+    if (!window.confirm(name + ' 님의 응답을 삭제할까요?')) return;
+    api('DELETE', '/api/responses?name=' + encodeURIComponent(name)).then(function () { toast('삭제했어요'); load(); })
+      .catch(function (err) { toast(err.message || '삭제하지 못했어요'); });
+  });
+
+  /* 이름·저장 */
+  var nameEl = $('#name');
+  nameEl.value = lsGet('study-name') || '';
+  myName = nameEl.value.trim();
+  nameEl.addEventListener('change', function () {
+    myName = nameEl.value.trim().replace(/\s+/g, ' ');
+    nameEl.value = myName;
+    lsSet('study-name', myName);
+    var r = myName && responses[myName];
+    if (r) { mySlots = new Set(r.slots || []); dirty = false; renderMine(); toast('이전에 낸 시간을 불러왔어요'); }
+  });
+
+  $('#save').onclick = function () {
+    myName = nameEl.value.trim().replace(/\s+/g, ' ');
+    if (!myName) { toast('이름을 먼저 입력해 주세요'); nameEl.focus(); return; }
+    var btn = this; btn.disabled = true;
+    api('PUT', '/api/responses', { name: myName, slots: Array.from(mySlots).sort() }).then(function () {
+      lsSet('study-name', myName); dirty = false;
+      toast('저장했어요. 모두의 시간 탭에서 확인해 보세요');
+      return load();
+    }).catch(function (e) { toast(e.message || '저장하지 못했어요. 잠시 뒤 다시 시도해 주세요'); })
+      .then(function () { btn.disabled = false; });
+  };
+
+  /* 공유 */
+  $('#share').onclick = async function () {
+    var url = location.origin + '/';
+    var text = cfg.title + ' 시간 정해요! 가능한 시간을 칠해 주세요 (한 번에 약 3시간)';
+    if (navigator.share) {
+      try { await navigator.share({ title: cfg.title + ' 시간 맞추기', text: text, url: url }); return; }
+      catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    var ta = $('#sharetext'); ta.value = text + '\n' + url;
+    try { await navigator.clipboard.writeText(ta.value); ta.hidden = true; toast('복사했어요. 카카오톡에 붙여넣기 하세요'); }
+    catch (e) { ta.hidden = false; ta.focus(); ta.select(); toast('아래 글을 길게 눌러 복사해 주세요'); }
+  };
+
+  /* 관리자 */
+  function showAdmin() {
+    $('#admin-locked').hidden = isAdmin;
+    $('#admin-open').hidden = !isAdmin;
+    $('#cfg-title').value = cfg.title; $('#cfg-start').value = cfg.start;
+  }
+  function checkAdmin(quiet) {
+    if (!adminKey) return Promise.resolve();
+    return api('GET', '/api/admin').then(function () { isAdmin = true; ssSet('study-admin', adminKey); }).catch(function () {
+      isAdmin = false; adminKey = ''; ssSet('study-admin', '');
+      if (!quiet) toast('비밀번호가 맞지 않아요');
+    }).then(function () { showAdmin(); render(); });
+  }
+  $('#admin-unlock').onclick = function () { adminKey = $('#admin-key').value; checkAdmin(false); };
+  $('#cfg-save').onclick = function () {
+    api('PUT', '/api/config', { title: $('#cfg-title').value, start: $('#cfg-start').value })
+      .then(function (r) { cfg = r.config; render(); toast('설정을 저장했어요'); })
+      .catch(function (e) { toast(e.message || '설정을 저장하지 못했어요'); });
+  };
+
+  adminKey = ssGet('study-admin') || '';
+  load().then(function () {
+    $('#admin-note').textContent = adminEnabled ? '' : '서버에 ADMIN_KEY가 설정되지 않아 관리자 기능을 쓸 수 없어요.';
+    showAdmin();
+    return checkAdmin(true);
+  });
+  setInterval(function () { if (!document.hidden && !painting) load(); }, 10000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && !painting) load(); });
+})();
+</script>
+</body>
+</html>
